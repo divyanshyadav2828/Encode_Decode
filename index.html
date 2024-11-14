@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encode-Decode</title>
+<style>
+body {
+font-family: Arial, sans-serif;
+margin: 20px;
+padding: 20px;
+max-width: 600px;
+margin: auto;
+border: 1px solid #ddd;
+border-radius: 8px;
+}
+label, button {
+display: block;
+margin: 10px 0;
+}
+input, textarea {
+width: 100%;
+padding: 8px;
+margin-top: 4px;
+}
+textarea {
+height: 100px;
+}
+</style>
+</head>
+<body>
+<h1>Encode - Decode</h1>
+<form id="cipherForm">
+<label for="action">Select The Type</label>
+<select id="action" name="action">
+<option value="encode">Encode</option>
+<option value="decode">Decode</option>
+</select>
+<label for="shift">Enter Number</label>
+<input type="number" id="shift" name="shift" value="3">
+<label for="inputText">Enter The Text</label>
+<textarea id="inputText" name="inputText"></textarea>
+<button type="button" onclick="processText()">Submit</button>
+</form>
+<h2>Result:</h2>
+<p id="result"></p>
+<script>
+// Function to encode a word
+function encode(word, shift) {
+shift = shift % 26; // Handle large shift values
+return word.split('').map(char => {
+if (char >= 'a' && char <= 'z') {
+return String.fromCharCode(((char.charCodeAt(0) - 'a'.charCodeAt(0) + shift) % 26) + 'a'.charCodeAt(0));
+} else if (char >= 'A' && char <= 'Z') {
+return String.fromCharCode(((char.charCodeAt(0) - 'A'.charCodeAt(0) + shift) % 26) + 'A'.charCodeAt(0));
+} else {
+return char; // Non-alphabetic characters remain unchanged
+}
+}).join('');
+}
+// Function to decode a word
+function decode(word, shift) {
+shift = shift % 26; // Handle large shift values
+return word.split('').map(char => {
+if (char >= 'a' && char <= 'z') {
+return String.fromCharCode(((char.charCodeAt(0) - 'a'.charCodeAt(0) - shift + 26) % 26) + 'a'.charCodeAt(0));
+} else if (char >= 'A' && char <= 'Z') {
+return String.fromCharCode(((char.charCodeAt(0) - 'A'.charCodeAt(0) - shift + 26) % 26) + 'A'.charCodeAt(0));
+} else {
+return char; // Non-alphabetic characters remain unchanged
+}
+}).join('');
+}
+// Function to process the text based on selected action
+function processText() {
+const action = document.getElementById('action').value;
+const shift = parseInt(document.getElementById('shift').value, 10);
+const inputText = document.getElementById('inputText').value;
+let result;
+if (action === 'encode') {
+result = encode(inputText, shift);
+} else if (action === 'decode') {
+result = decode(inputText, shift);
+}
+document.getElementById('result').textContent = result;
+}
+</script>
+</body>
+</html>
