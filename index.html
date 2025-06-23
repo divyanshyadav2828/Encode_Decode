@@ -1,89 +1,489 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Encode-Decode</title>
-<style>
-body {
-font-family: Arial, sans-serif;
-margin: 20px;
-padding: 20px;
-max-width: 600px;
-margin: auto;
-border: 1px solid #ddd;
-border-radius: 8px;
-}
-label, button {
-display: block;
-margin: 10px 0;
-}
-input, textarea {
-width: 100%;
-padding: 8px;
-margin-top: 4px;
-}
-textarea {
-height: 100px;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureText - Encrypt & Decrypt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- Video Background Styles --- */
+        #bg-video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -100;
+            transform: translateX(-50%) translateY(-50%);
+            background-size: cover;
+            filter: blur(2px); /* Optional: Adds a slight blur to the video */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a092d; /* Fallback color */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            position: relative;
+        }
+
+        /* Add an overlay for readability */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(10, 9, 45, 0.7); /* Dark semi-transparent overlay */
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(118, 75, 162, 0.4), transparent 40%),
+                radial-gradient(circle at 80% 90%, rgba(52, 81, 161, 0.4), transparent 40%);
+            z-index: -99;
+        }
+
+        /* Main card styling */
+        .glass-card {
+            background: rgba(18, 18, 48, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Custom focus rings */
+        .form-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px #0a092d, 0 0 0 4px #7c3aed;
+        }
+        
+        /* --- Mode Switcher Styles --- */
+        .mode-switcher {
+            position: relative;
+            width: 16rem; /* w-64 */
+            background-color: rgba(31, 29, 65, 0.7);
+            border-radius: 9999px;
+            padding: 0.25rem; /* p-1 */
+            display: flex;
+            margin: auto;
+            margin-bottom: 1.5rem; /* mb-6 */
+            border: 1px solid rgba(124, 58, 237, 0.3);
+        }
+
+        .switcher-btn {
+            flex: 1;
+            padding: 0.5rem 0; /* py-2 */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 600; /* font-semibold */
+            color: #a78bfa; /* text-purple-300 */
+            background-color: transparent;
+            border: none;
+            border-radius: 9999px;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+            transition: color 0.4s ease-in-out;
+        }
+
+        .switcher-btn.active {
+            color: white;
+        }
+
+        .switcher-slider {
+            position: absolute;
+            top: 0.25rem;
+            left: 0.25rem;
+            width: calc(50% - 0.25rem);
+            height: calc(100% - 0.5rem);
+            background-image: linear-gradient(to right, #8b5cf6, #6366f1);
+            border-radius: 9999px;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 5;
+        }
+
+        /* Button animation */
+        .btn-primary {
+            transition: all 0.2s ease-in-out;
+        }
+        .btn-primary:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+        }
+
+        /* Result box animation */
+        .result-box {
+            transition: all 0.3s ease-in-out;
+            min-height: 100px;
+        }
+        
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        /* Hide scrollbar for IE, Edge and Firefox */
+        .no-scrollbar {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+    </style>
 </head>
-<body>
-<h1>Encode - Decode</h1>
-<form id="cipherForm">
-<label for="action">Select The Type</label>
-<select id="action" name="action">
-<option value="encode">Encode</option>
-<option value="decode">Decode</option>
-</select>
-<label for="shift">Enter Number</label>
-<input type="number" id="shift" name="shift" value="3">
-<label for="inputText">Enter The Text</label>
-<textarea id="inputText" name="inputText"></textarea>
-<button type="button" onclick="processText()">Submit</button>
-</form>
-<h2>Result:</h2>
-<p id="result"></p>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Video Background -->
+    <video autoplay muted loop id="bg-video">
+        <source src="https://videos.pexels.com/video-files/3141208/3141208-hd_1920_1080_25fps.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <div class="w-full max-w-md mx-auto z-10">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h1 class="text-4xl font-bold text-white tracking-tight">SecureText</h1>
+            <p class="text-purple-300">True Privacy. No Servers. No Traces.</p>
+        </div>
+
+        <!-- Main Application Card -->
+        <div id="app-card" class="glass-card rounded-2xl p-6 md:p-8 shadow-2xl shadow-purple-900/20">
+            
+            <!-- Mode Switcher Buttons -->
+            <div class="mode-switcher">
+                <button id="encrypt-mode-btn" class="switcher-btn active">Encrypt</button>
+                <button id="decrypt-mode-btn" class="switcher-btn">Decrypt</button>
+                <div class="switcher-slider"></div>
+            </div>
+
+            <!-- Encryption Section -->
+            <div id="encrypt-section">
+                <form id="encrypt-form" class="space-y-4">
+                    <div>
+                        <label for="encrypt-text" class="text-sm font-medium text-purple-200 block mb-2">Text to Encrypt</label>
+                        <textarea id="encrypt-text" rows="3" class="form-input w-full bg-gray-900/50 text-white rounded-lg p-3 border border-purple-800/50 focus:border-purple-500 transition-all duration-300" placeholder="Enter your secret message..."></textarea>
+                    </div>
+                    <div class="relative">
+                        <label for="encrypt-password" class="text-sm font-medium text-purple-200 block mb-2">Secret Passphrase</label>
+                        <input type="password" id="encrypt-password" class="form-input w-full bg-gray-900/50 text-white rounded-lg p-3 border border-purple-800/50 focus:border-purple-500 transition-all duration-300" placeholder="Create a strong passphrase">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3 pt-7 cursor-pointer" onclick="togglePasswordVisibility('encrypt-password', this)">
+                            <svg class="h-5 w-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </span>
+                    </div>
+                    <div class="relative">
+                        <label for="encrypt-password-confirm" class="text-sm font-medium text-purple-200 block mb-2">Confirm Passphrase</label>
+                        <input type="password" id="encrypt-password-confirm" class="form-input w-full bg-gray-900/50 text-white rounded-lg p-3 border border-purple-800/50 focus:border-purple-500 transition-all duration-300" placeholder="Confirm your passphrase">
+                         <span class="absolute inset-y-0 right-0 flex items-center pr-3 pt-7 cursor-pointer" onclick="togglePasswordVisibility('encrypt-password-confirm', this)">
+                            <svg class="h-5 w-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </span>
+                    </div>
+                    <button type="submit" class="btn-primary w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:from-purple-700 hover:to-indigo-700 shadow-lg hover:shadow-purple-500/50">
+                        Encrypt Text
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Decryption Section -->
+            <div id="decrypt-section" class="hidden">
+                 <form id="decrypt-form" class="space-y-4">
+                    <div>
+                        <label for="decrypt-text" class="text-sm font-medium text-purple-200 block mb-2">Text to Decrypt</label>
+                        <textarea id="decrypt-text" rows="3" class="form-input w-full bg-gray-900/50 text-white rounded-lg p-3 border border-purple-800/50 focus:border-purple-500 transition-all duration-300" placeholder="Paste your encrypted text..."></textarea>
+                    </div>
+                    <div class="relative">
+                        <label for="decrypt-password" class="text-sm font-medium text-purple-200 block mb-2">Secret Passphrase</label>
+                        <input type="password" id="decrypt-password" class="form-input w-full bg-gray-900/50 text-white rounded-lg p-3 border border-purple-800/50 focus:border-purple-500 transition-all duration-300" placeholder="Enter your passphrase">
+                         <span class="absolute inset-y-0 right-0 flex items-center pr-3 pt-7 cursor-pointer" onclick="togglePasswordVisibility('decrypt-password', this)">
+                            <svg class="h-5 w-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </span>
+                    </div>
+                    <button type="submit" class="btn-primary w-full bg-gradient-to-r from-green-500 to-teal-500 text-white font-bold py-3 px-4 rounded-lg hover:from-green-600 hover:to-teal-600 shadow-lg hover:shadow-teal-500/50">
+                        Decrypt Text
+                    </button>
+                </form>
+            </div>
+
+            <!-- Error and Result Area -->
+            <div class="mt-6">
+                <div id="error-message" class="hidden text-red-400 bg-red-900/50 p-3 rounded-lg text-sm text-center"></div>
+                <div id="result-container" class="hidden mt-4">
+                    <h3 class="font-bold text-white text-center mb-2">Result</h3>
+                    <div class="result-box bg-gray-900/70 p-4 rounded-lg border border-purple-800/50 relative">
+                        <p id="result-text" class="text-green-300 break-words text-sm no-scrollbar max-h-32 overflow-y-auto"></p>
+                        <button id="copy-button" class="absolute top-2 right-2 p-1.5 bg-purple-600 hover:bg-purple-700 rounded-md transition-colors" title="Copy to clipboard">
+                             <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
 <script>
-// Function to encode a word
-function encode(word, shift) {
-shift = shift % 26; // Handle large shift values
-return word.split('').map(char => {
-if (char >= 'a' && char <= 'z') {
-return String.fromCharCode(((char.charCodeAt(0) - 'a'.charCodeAt(0) + shift) % 26) + 'a'.charCodeAt(0));
-} else if (char >= 'A' && char <= 'Z') {
-return String.fromCharCode(((char.charCodeAt(0) - 'A'.charCodeAt(0) + shift) % 26) + 'A'.charCodeAt(0));
-} else {
-return char; // Non-alphabetic characters remain unchanged
-}
-}).join('');
-}
-// Function to decode a word
-function decode(word, shift) {
-shift = shift % 26; // Handle large shift values
-return word.split('').map(char => {
-if (char >= 'a' && char <= 'z') {
-return String.fromCharCode(((char.charCodeAt(0) - 'a'.charCodeAt(0) - shift + 26) % 26) + 'a'.charCodeAt(0));
-} else if (char >= 'A' && char <= 'Z') {
-return String.fromCharCode(((char.charCodeAt(0) - 'A'.charCodeAt(0) - shift + 26) % 26) + 'A'.charCodeAt(0));
-} else {
-return char; // Non-alphabetic characters remain unchanged
-}
-}).join('');
-}
-// Function to process the text based on selected action
-function processText() {
-const action = document.getElementById('action').value;
-const shift = parseInt(document.getElementById('shift').value, 10);
-const inputText = document.getElementById('inputText').value;
-let result;
-if (action === 'encode') {
-result = encode(inputText, shift);
-} else if (action === 'decode') {
-result = decode(inputText, shift);
-}
-document.getElementById('result').textContent = result;
-}
+    // --- DOM Elements ---
+    const encryptSection = document.getElementById('encrypt-section');
+    const decryptSection = document.getElementById('decrypt-section');
+    const encryptModeBtn = document.getElementById('encrypt-mode-btn');
+    const decryptModeBtn = document.getElementById('decrypt-mode-btn');
+    const slider = document.querySelector('.switcher-slider');
+    const encryptForm = document.getElementById('encrypt-form');
+    const decryptForm = document.getElementById('decrypt-form');
+    const encryptText = document.getElementById('encrypt-text');
+    const encryptPassword = document.getElementById('encrypt-password');
+    const encryptPasswordConfirm = document.getElementById('encrypt-password-confirm');
+    const decryptText = document.getElementById('decrypt-text');
+    const decryptPassword = document.getElementById('decrypt-password');
+    const errorMessage = document.getElementById('error-message');
+    const resultContainer = document.getElementById('result-container');
+    const resultText = document.getElementById('result-text');
+    const copyButton = document.getElementById('copy-button');
+
+    // --- AES-256 GCM Encryption Logic using Web Crypto API ---
+    // Features:
+    // - AES-256 level encryption using a secret passphrase.
+    // - PBKDF2 for key derivation from passphrase.
+    // - Random salt & IV (initialization vector) for each encryption → prevents pattern guessing.
+    // - Output format: Base64(salt + iv + ciphertext)
+
+    const NEW_MAGIC_PREFIX = "aes256gcm_";
+    const SALT_LENGTH = 16; // 128 bit
+    const IV_LENGTH = 12; // 96 bit - Recommended for GCM
+    const PBKDF2_ITERATIONS = 100000;
+
+    /**
+     * Derives a cryptographic key from a password and salt using PBKDF2.
+     * @param {string} password - The user's password.
+     * @param {Uint8Array} salt - The random salt.
+     * @returns {Promise<CryptoKey>} - The derived cryptographic key.
+     */
+    async function getKey(password, salt) {
+        const passwordBuffer = new TextEncoder().encode(password);
+        const baseKey = await window.crypto.subtle.importKey(
+            "raw",
+            passwordBuffer,
+            { name: "PBKDF2" },
+            false,
+            ["deriveKey"]
+        );
+        return await window.crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt: salt,
+                iterations: PBKDF2_ITERATIONS,
+                hash: "SHA-256",
+            },
+            baseKey,
+            { name: "AES-GCM", length: 256 },
+            true,
+            ["encrypt", "decrypt"]
+        );
+    }
+
+    /**
+     * Encrypts plaintext using AES-256-GCM.
+     * @param {string} text - The plaintext to encrypt.
+     * @param {string} password - The passphrase.
+     * @returns {Promise<string>} - The Base64 encoded ciphertext (salt + iv + data).
+     */
+    async function encrypt(text, password) {
+        const salt = window.crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+        const iv = window.crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+        const key = await getKey(password, salt);
+        
+        const textEncoder = new TextEncoder();
+        const encryptedData = await window.crypto.subtle.encrypt(
+            { name: "AES-GCM", iv: iv },
+            key,
+            textEncoder.encode(text)
+        );
+
+        const encryptedArray = new Uint8Array(encryptedData);
+        const combinedData = new Uint8Array(salt.length + iv.length + encryptedArray.length);
+        combinedData.set(salt, 0);
+        combinedData.set(iv, salt.length);
+        combinedData.set(encryptedArray, salt.length + iv.length);
+
+        // Convert byte array to Base64 string for easy storage/transmission
+        const base64String = btoa(String.fromCharCode.apply(null, combinedData));
+        return NEW_MAGIC_PREFIX + base64String;
+    }
+
+    /**
+     * Decrypts ciphertext using AES-256-GCM.
+     * @param {string} cipherText - The Base64 encoded ciphertext.
+     * @param {string} password - The passphrase.
+     * @returns {Promise<string>} - The decrypted plaintext.
+     */
+    async function decrypt(cipherText, password) {
+        if (!cipherText.startsWith(NEW_MAGIC_PREFIX)) {
+            throw new Error("Invalid format. This text was not encrypted with this tool.");
+        }
+        const base64Data = cipherText.substring(NEW_MAGIC_PREFIX.length);
+        const combinedData = new Uint8Array(atob(base64Data).split("").map(c => c.charCodeAt(0)));
+
+        const salt = combinedData.slice(0, SALT_LENGTH);
+        const iv = combinedData.slice(SALT_LENGTH, SALT_LENGTH + IV_LENGTH);
+        const encrypted = combinedData.slice(SALT_LENGTH + IV_LENGTH);
+
+        const key = await getKey(password, salt);
+        
+        const decryptedData = await window.crypto.subtle.decrypt(
+            { name: "AES-GCM", iv: iv },
+            key,
+            encrypted
+        );
+
+        return new TextDecoder().decode(decryptedData);
+    }
+
+
+    // --- UI Logic and Event Handlers ---
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.classList.remove('hidden');
+        resultContainer.classList.add('hidden');
+    }
+
+    function clearError() {
+        errorMessage.classList.add('hidden');
+    }
+    
+    function showResult(text) {
+        resultText.textContent = text;
+        resultContainer.classList.remove('hidden');
+        clearError();
+    }
+
+    window.togglePasswordVisibility = function(inputId, iconContainer) {
+        const input = document.getElementById(inputId);
+        const icon = iconContainer.querySelector('svg');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7 1.274-4.057 5.064-7 9.542-7 .847 0 1.67.127 2.457.362m3.658 3.658A9.936 9.936 0 0119.542 12c-1.274 4.057-5.064 7-9.542 7a9.936 9.936 0 01-3.658-.642m3.658-3.658V12a1.5 1.5 0 00-3 0m3 0a1.5 1.5 0 01-3 0m0 0V9.172m3.658 3.658L6.172 6.172" />`;
+        } else {
+            input.type = 'password';
+            icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+        }
+    }
+    
+    function copyToClipboard(text) {
+        const tempTextArea = document.createElement('textarea');
+        tempTextArea.value = text;
+        document.body.appendChild(tempTextArea);
+        tempTextArea.select();
+        try {
+            document.execCommand('copy');
+            const originalButtonContent = copyButton.innerHTML;
+            copyButton.innerHTML = `<svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>`;
+            copyButton.title = "Copied!";
+            setTimeout(() => {
+                copyButton.innerHTML = originalButtonContent;
+                copyButton.title = "Copy to clipboard";
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            showError('Could not copy text to clipboard.');
+        }
+        document.body.removeChild(tempTextArea);
+    }
+
+    // --- Event Listeners Setup ---
+    encryptModeBtn.addEventListener('click', () => {
+        encryptSection.classList.remove('hidden');
+        decryptSection.classList.add('hidden');
+        encryptModeBtn.classList.add('active');
+        decryptModeBtn.classList.remove('active');
+        slider.style.transform = 'translateX(0%)';
+        clearError();
+        resultContainer.classList.add('hidden');
+    });
+
+    decryptModeBtn.addEventListener('click', () => {
+        encryptSection.classList.add('hidden');
+        decryptSection.classList.remove('hidden');
+        decryptModeBtn.classList.add('active');
+        encryptModeBtn.classList.remove('active');
+        slider.style.transform = 'translateX(100%)';
+        clearError();
+        resultContainer.classList.add('hidden');
+    });
+
+    encryptForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearError();
+        e.submitter.disabled = true;
+        e.submitter.textContent = 'Encrypting...';
+
+        const text = encryptText.value;
+        const pass = encryptPassword.value;
+        const confirmPass = encryptPasswordConfirm.value;
+
+        if (!text || !pass || !confirmPass) {
+            e.submitter.disabled = false;
+            e.submitter.textContent = 'Encrypt Text';
+            return showError("All fields are required for encryption.");
+        }
+        if (pass.length < 8) {
+            e.submitter.disabled = false;
+            e.submitter.textContent = 'Encrypt Text';
+            return showError("Passphrase must be at least 8 characters long.");
+        }
+        if (pass !== confirmPass) {
+            e.submitter.disabled = false;
+            e.submitter.textContent = 'Encrypt Text';
+            return showError("Passphrases do not match. Please try again.");
+        }
+
+        try {
+            const encrypted = await encrypt(text, pass);
+            showResult(encrypted);
+        } catch(err) {
+            console.error(err);
+            showError("An unexpected error occurred during encryption.");
+        } finally {
+            e.submitter.disabled = false;
+            e.submitter.textContent = 'Encrypt Text';
+        }
+    });
+
+    decryptForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        clearError();
+        e.submitter.disabled = true;
+        e.submitter.textContent = 'Decrypting...';
+
+        const text = decryptText.value;
+        const pass = decryptPassword.value;
+
+        if (!text || !pass) {
+            e.submitter.disabled = false;
+            e.submitter.textContent = 'Decrypt Text';
+            return showError("Encrypted text and passphrase are required.");
+        }
+        
+        try {
+            const decrypted = await decrypt(text, pass);
+            showResult(decrypted);
+            resultText.classList.remove('text-green-300');
+            resultText.classList.add('text-white');
+        } catch (error) {
+            console.error("Decryption failed:", error);
+            showError("Decryption failed. Check your passphrase or encrypted text.");
+            resultText.classList.remove('text-white');
+            resultText.classList.add('text-green-300');
+        } finally {
+            e.submitter.disabled = false;
+            e.submitter.textContent = 'Decrypt Text';
+        }
+    });
+    
+    copyButton.addEventListener('click', () => {
+        if(resultText.textContent) {
+            copyToClipboard(resultText.textContent);
+        }
+    });
+
 </script>
 </body>
 </html>
